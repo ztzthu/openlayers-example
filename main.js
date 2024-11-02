@@ -19,11 +19,12 @@ import {fromArrayBuffer} from 'geotiff';
 
 
 const base_layer = new TileLayer({
-        source: new StadiaMaps({
-          // See our gallery for more styles: https://docs.stadiamaps.com/themes/
-          layer: 'stamen_toner',
-          retina: true,  // Set to false for stamen_watercolor
-        }),
+        source: new OSM(),
+        // new StadiaMaps({
+        //   // See our gallery for more styles: https://docs.stadiamaps.com/themes/
+        //   layer: 'stamen_toner',
+        //   retina: true,  // Set to false for stamen_watercolor
+        // }),
     });
 
 const source = new VectorSource({wrapX: false});
