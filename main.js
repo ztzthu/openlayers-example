@@ -134,7 +134,7 @@ async function calculateGeotiffAverage(url_prefix, bbox) {
 
       // Calculate average
       const average = sum / count;
-      alert("Average Elevation:", average);
+      alert(`Average Elevation: ${average}m`);
       return average;
 
   // } catch (error) {
