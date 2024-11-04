@@ -139,6 +139,7 @@ async function calculateGeotiffAverage(url_prefix, polygonGeometry, bbox) {
           // Ignore NoData values if specified in GeoTIFF metadata TODO: Check if this is correct
           if (rasterData[i] !== image.getGDALNoData()) {
             // Check if the pixel is within the polygon
+            // TODO: there could be better solutions, for example transforming the polygon to a binary raster first
             let coord = getPixelCoordinates(i, image);
             coord = transform(coord, 'EPSG:4326', 'EPSG:3857')
             if (polygonGeometry.intersectsCoordinate(coord)) {
