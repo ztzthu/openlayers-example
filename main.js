@@ -16,6 +16,16 @@ import {toLonLat, transform} from 'ol/proj';
 // from Math import getWidth, getHeight;
 import { getWidth, getHeight } from "ol/extent";
 import {fromArrayBuffer} from 'geotiff';
+import GeoJSON from 'ol/format/GeoJSON.js'; 
+
+function getPixelCoordinates(idx, image) {
+  const width = image.getWidth();
+  const x = idx % width;
+  const y = Math.floor(idx / width);
+  const [originCoord_x, originCoord_y, temp] = image.getOrigin();
+  const [resolution_x, resolution_y, temp2] = image.getResolution();
+  return [originCoord_x + x * resolution_x, originCoord_y - y * resolution_y];
+} 
 
 
 const base_layer = new TileLayer({
@@ -64,8 +74,9 @@ let draw;
 function addInteraction() {
   draw = new Draw({
     source: source,
-    type: 'Circle',
-    geometryFunction: createBox()
+    type: 'Polygon'
+    // type: 'Circle',
+    // geometryFunction: createBox()
   });
   map.addInteraction(draw);
 }
@@ -84,7 +95,7 @@ draw.on('drawstart', function (evt) {
 //   const [minX, minY, maxX, maxY] = bbox;
 
 // }
-async function calculateGeotiffAverage(url_prefix, bbox) {
+async function calculateGeotiffAverage(url_prefix, polygonGeometry, bbox) {
   // try {
       // Get the url from url prefix and bbox
       // Example: https://geoserver.swissdatacube.org/geoserver/sdc/wms?service=WMS&version=1.1.0&request=GetMap&layers=sdc%3ACh_DEM1&srs=EPSG%3A3857&styles=&format=image%2Fgeotiff&bbox=639600%2C5729500%2C1174800%2C6072362&width=768&height=492
@@ -127,14 +138,19 @@ async function calculateGeotiffAverage(url_prefix, bbox) {
       for (let i = 0; i < rasterData.length; i++) {
           // Ignore NoData values if specified in GeoTIFF metadata TODO: Check if this is correct
           if (rasterData[i] !== image.getGDALNoData()) {
+            // Check if the pixel is within the polygon
+            let coord = getPixelCoordinates(i, image);
+            coord = transform(coord, 'EPSG:4326', 'EPSG:3857')
+            if (polygonGeometry.intersectsCoordinate(coord)) {
               sum += rasterData[i];
               count++;
+            }
           }
       }
 
       // Calculate average
       const average = sum / count;
-      alert(`Average Elevation: ${average}m`);
+
       return average;
 
   // } catch (error) {
@@ -144,6 +160,12 @@ async function calculateGeotiffAverage(url_prefix, bbox) {
 
 
 draw.on('drawend', function (evt) {
+
+  // Get drawn polygon
+  const writer = new GeoJSON(); 
+  const geojsonStr = writer.writeFeatures([evt.feature]); 
+  const polygonGeometry = evt.feature.getGeometry();
+
   const rectangle = evt.feature.getGeometry();
   const bbox = rectangle.getExtent();
   
@@ -151,7 +173,12 @@ draw.on('drawend', function (evt) {
   // const viewResolution = map.getView().getResolution();
   const url_prefix = 'https://geoportal.georhena.eu/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=basemaps:mnt_dem&FORMAT=GeoTIFF&CRS=EPSG:4258&INTERPOLATION=nearest%20neighbor';
 
-  calculateGeotiffAverage(url_prefix, bbox);
+  async function get_result(){
+    let average_elevation = await calculateGeotiffAverage(url_prefix, polygonGeometry, bbox);
+    alert(`Geojson: ${geojsonStr} \n\nAverage elevation is ${average_elevation.toFixed(4)} meters`);
+  }
+
+  get_result();
 
   // const url = wmsLayer.getSource().getFeatureInfoUrl(
   //   center,
