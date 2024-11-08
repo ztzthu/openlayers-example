@@ -1,0 +1,16 @@
+https://geoserver.swissdatacube.org/geoserver/ows?SERVICE=WMS?service=wfs&version=2.0.0&equest=GetFeature&typeName=sdc%3ACh_DEM1&srsName=EPSG%3A3857&bbox=763147.2903992012%2C5929067.410024552%2C782715.1696402064%2C5948635.289265557
+
+https://geoserver.swissdatacube.org/geoserver/ows?SERVICE=WMS&REQUEST=GetFeatureInfo&QUERY_LAYERS=sdc%3ACh_DEM1&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=true&LAYERS=sdc%3ACh_DEM1&INFO_FORMAT=application%2Fjson&I=244&J=85&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=763147.2903992012%2C5929067.410024552%2C782715.1696402064%2C5948635.289265557
+
+
+https://geoserver.swissdatacube.org/geoserver/sdc/wms?service=WMS&version=1.1.0&request=GetMap&layers=sdc%3ACh_DEM1&bbox=863995.2344312127%2C5872051.276922347%2C896284.1594412515%2C5895690.056023773&width=768&height=562&srs=EPSG%3A3857&styles=&format=image%2Fgeotiff
+
+https://geoserver.swissdatacube.org/geoserver/wcs?SERVICE=WCS&VERSION=1.1.1&REQUEST=GetCoverage&IDENTIFIER=sdc:Ch_DEM1&FORMAT=image/tiff&BOUNDINGBOX=863995.2344312127%2C5872051.276922347%2C896284.1594412515%2C5895690.056023773,urn:ogc:def:crs:EPSG::3857
+                                &RangeSubset=Field_1:nearest[BAND[1]]&GridBaseCRS=urn:ogc:def:crs:EPSG::3857&GridCS=urn:ogc:def:crs:EPSG::3857&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=-13845885.5590586,5131267.73075641&GridOffsets=2879.09319899244,-2879.80392156863
+
+https://geoserver.swissdatacube.org/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=sdc:Ch_DEM1&FORMAT=GeoTIFF&BBOX=639600%2C5729500%2C1174800%2C6072362&WIDTH=768&HEIGHT=492&CRS=EPSG:3857&INTERPOLATION=nearest%20neighbor
+
+
+## correct wcs
+https://geoserver.swissdatacube.org/geoserver/wcs?SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&IDENTIFIER=sdc:Ch_DEM1&FORMAT=image/tiff&BOUNDINGBOX=863995.2344312127%2C5872051.276922347%2C896284.1594412515%2C5895690.056023773,urn:ogc:def:crs:EPSG::3857&
+https://geoportal.georhena.eu/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=basemaps:mnt_dem&FORMAT=GeoTIFF&BBOX=6.404821737%2C47.484411917%2C6.908502599%2C48.108964005&WIDTH=768&HEIGHT=492&CRS=EPSG:4258&INTERPOLATION=nearest%20neighbor

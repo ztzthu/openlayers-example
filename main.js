@@ -17,6 +17,70 @@ import {toLonLat, transform} from 'ol/proj';
 import { getWidth, getHeight } from "ol/extent";
 import {fromArrayBuffer} from 'geotiff';
 import GeoJSON from 'ol/format/GeoJSON.js'; 
+import axios, {isCancel, AxiosError} from 'axios';
+
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-moment';
+
+let chart;
+
+function loadPrecipitationData(precipitationData) {
+
+  if (chart) {
+    chart.destroy();
+  }
+
+  // Convert the data into an array of {x, y} objects for Chart.js
+  const dataPoints = Object.entries(precipitationData).map(([time, value]) => ({
+      x: new Date(parseInt(time) / 1000000),  // Convert nanoseconds to milliseconds
+      y: value * 1000  // Convert m to mm
+  }));
+
+
+  // Set up the Chart.js chart
+  const ctx = document.getElementById('precipitationChart').getContext('2d');
+  chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          datasets: [{
+              label: 'Mean Precipitation',
+              data: dataPoints,
+              borderColor: 'blue',
+              fill: false,
+              tension: 0.1  // Line smoothness
+          }]
+      },
+      options: {
+          scales: {
+              x: {
+                  type: 'time',
+                  time: {
+                      // Custom display format for day and hour
+                      displayFormats: {
+                          hour: 'MMM DD, HH:00'  // Shows date (abbreviated month, day) and hour (AM/PM)
+                      },
+                      tooltipFormat: 'YYYY-MM-DD, HH:00', // Tooltip format for precision
+                  },
+                  title: {
+                      display: true,
+                      text: 'Time (UTC)'
+                  }
+              },
+              y: {
+                  title: {
+                      display: true,
+                      text: 'Precipitation (mm)'
+                  },
+                  beginAtZero: true
+              }
+          }
+      }
+  })
+
+}
+
+
+
 
 function getPixelCoordinates(idx, image) {
   const width = image.getWidth();
@@ -42,21 +106,21 @@ const vector = new VectorLayer({
   source: source,
 });
 
-const wmsLayer = new TileLayer({
-  source: new TileWMS({
-    // url: 'https://geoserver.swissdatacube.org/geoserver/ows?SERVICE=WMS',
-    url: 'https://geoportal.georhena.eu/geoserver/ows?SERVICE=WMS',
-    params: {
-      // 'LAYERS': 'sdc:Ch_DEM1',
-      'LAYERS': 'basemaps:mnt_dem',
-      'FORMAT': 'image/png'
-    },
-    // crossOrigin: 'anonymous'
-  }),
-  opacity: 0.5,
-});
+// const wmsLayer = new TileLayer({
+//   source: new TileWMS({
+//     // url: 'https://geoserver.swissdatacube.org/geoserver/ows?SERVICE=WMS',
+//     url: 'https://geoportal.georhena.eu/geoserver/ows?SERVICE=WMS',
+//     params: {
+//       // 'LAYERS': 'sdc:Ch_DEM1',
+//       'LAYERS': 'basemaps:mnt_dem',
+//       'FORMAT': 'image/png'
+//     },
+//     // crossOrigin: 'anonymous'
+//   }),
+//   opacity: 0.5,
+// });
 
-let layers = [base_layer, wmsLayer, vector];
+let layers = [base_layer, vector];
 
 const center = transform([8.5, 48.5], 'EPSG:4326', 'EPSG:3857');
 const map = new Map({
@@ -64,7 +128,7 @@ const map = new Map({
     layers: layers,
     view: new View({
         center: center,
-        zoom: 8
+        zoom: 6
     })
 });
 
@@ -172,14 +236,58 @@ draw.on('drawend', function (evt) {
   
   // const center = [(minX + maxX) / 2, (minY + maxY) / 2];
   // const viewResolution = map.getView().getResolution();
-  const url_prefix = 'https://geoportal.georhena.eu/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=basemaps:mnt_dem&FORMAT=GeoTIFF&CRS=EPSG:4258&INTERPOLATION=nearest%20neighbor';
+  // const url_prefix = 'https://geoportal.georhena.eu/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=basemaps:mnt_dem&FORMAT=GeoTIFF&CRS=EPSG:4258&INTERPOLATION=nearest%20neighbor';
 
-  async function get_result(){
-    let average_elevation = await calculateGeotiffAverage(url_prefix, polygonGeometry, bbox);
-    alert(`Geojson: ${geojsonStr} \n\nAverage elevation is ${average_elevation.toFixed(4)} meters`);
-  }
+  const geojson_polyon = JSON.parse(geojsonStr);
 
-  get_result();
+  const time_start = prompt("Enter start date (YYYY-MM-DD):", "2020-01-01");
+  const time_end = prompt("Enter end date (YYYY-MM-DD):", "2020-01-02");
+  const json_GET = {"geom": geojson_polyon, "time_start": time_start, "time_end": time_end};
+
+  const timerElement = document.getElementById('timer');
+  let startTime = performance.now();
+  console.log('Start time:', startTime);
+  const timerInterval = setInterval(() => {
+    const elapsedTime = Math.round(performance.now() - startTime);
+    timerElement.textContent = `Time spent fetching: ${elapsedTime} ms`;
+  }, 100);
+  
+
+  const cloudRunUrl = new URL('https://us-central1-dnext-441014.cloudfunctions.net/get_mean_tp');
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  fetch(cloudRunUrl, {
+    method: 'POST', // Use POST method
+    body: JSON.stringify(json_GET), // Send JSON data in the request body
+    headers: myHeaders, // Add the headers
+    // mode: 'no-cors' // Allow   cross-origin requests
+  })
+    .then(response => {
+      console.log("Fetch response:", response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json(); // Parse the JSON response
+    })
+    .then(data => {
+      console.log("Response from Cloud:", data);
+      loadPrecipitationData(data);})
+    .catch(error => console.error("Error:", error))
+    .finally(() => {
+      // Stop the timer and update with final elapsed time
+      console.log('End time:', performance.now());
+      clearInterval(timerInterval);
+      const finalElapsedTime = Math.round(performance.now() - startTime);
+      timerElement.textContent = `Time spent fetching: ${finalElapsedTime} ms`;
+    });
+
+
+  // async function get_result(){
+  //   let average_elevation = await calculateGeotiffAverage(url_prefix, polygonGeometry, bbox);
+  //   console.log(`Geojson: ${geojsonStr} \n\nAverage elevation is ${average_elevation.toFixed(4)} meters`);
+  // }
+
+  // get_result();
 
   // const url = wmsLayer.getSource().getFeatureInfoUrl(
   //   center,
