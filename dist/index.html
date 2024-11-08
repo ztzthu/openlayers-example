@@ -12,13 +12,40 @@
             height: 500px;
         }
     </style> -->
+    <style>
+        /* Container styling to place chart in upper right corner */
+        #chartContainer {
+          position: absolute;
+          top: 20px;    /* Adjust as needed */
+          right: 20px;  /* Adjust as needed */
+          width: 500px; /* Adjust as needed */
+          height: 320px; /* Adjust as needed */
+          background-color: white;  /* White background */
+          border: 1px solid #ddd;   /* Optional border for visibility */
+          padding: 5px;
+          padding-bottom: 10px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow */
+          border-radius: 8px; /* Optional rounded corners */
+        }
+        #timer {
+          margin: 0;
+          padding: 0;
+          font-size: 14px;
+          color: red;
+        }
+      </style>
     <title>Using OpenLayers with Vite</title>
-  <script type="module" crossorigin src="./assets/index-CCwKzBdx.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-D09opdbs.css">
+  <script type="module" crossorigin src="./assets/index-BF2kqA7d.js"></script>
+  <link rel="stylesheet" crossorigin href=",/assets/index-D09opdbs.css">
 </head>
 
 <body>
     <div id="map" class="map"></div>
+    <div id="chartContainer">
+        <p id="timer">Time spent fetching: 0 ms</p>
+        <canvas id="precipitationChart" width="600" height="400"></canvas>
+    </div>
+    <!-- <script type="module" src="./chart.js"></script> -->
 </body>
 
 </html>
